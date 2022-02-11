@@ -1,0 +1,128 @@
+version: '3'
+services:
+  #PHP
+  php:
+    build:
+      context: "./image/php/${PHP_VERSION}/."
+    image: "openweb/php:${PHP_VERSION}"
+    container_name: "${PREFIX}php"
+    restart: unless-stopped
+    tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./www:/var/www
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - ./scripts:/bin/app
+    networks:
+      - openweb-network
+  #NODE.js
+  node:
+    image: "node:${NODE_VERSION}"
+    container_name: "${PREFIX}node"
+    restart: unless-stopped
+    tty: true
+    working_dir: /var/www
+    volumes:
+      - ./www:/var/www
+      - ./scripts:/bin/app
+    networks:
+      - openweb-network
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: "${PREFIX}webserver"
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${WWW_PORT}:80"
+      - "${WWW_SECURITY_PORT}:443"
+    volumes:
+      - ./www:/var/www
+      - ./config/nginx/:/etc/nginx/conf.d/
+      - ./scripts:/bin/app
+    networks:
+      - openweb-network
+  #MySQL Service
+  mysql:
+    image: mysql:5.7.24
+    container_name: "${PREFIX}mysql"
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${MYSQL_PORT}:3306"
+    volumes:
+      - ./db/mysql:/var/lib/mysql
+      - ./scripts:/bin/app
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD}"
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks:
+      - openweb-network
+  #PostgreSQL
+  pgsql:
+    image: postgres
+    container_name: "${PREFIX}pgsql"
+    ports:
+      - "${PGSQL_PORT}:5432"
+    volumes:
+      - ./db/pgsql:/var/lib/postgresql
+      - ./scripts:/bin/app
+    environment:
+      POSTGRES_USER: "${PGSQL_USER}"
+      POSTGRES_PASSWORD: "${PGSQL_PASSWORD}"
+    networks:
+      - openweb-network
+  #RabbitMQ
+  rabbitmq:
+    image: rabbitmq
+    container_name: "${PREFIX}rabbitmq"
+    volumes:
+      - ./db/rabbitmq:/var/lib/rabbitmq
+      - ./scripts:/bin/app
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_TRAFFIC_PORT}:5672"
+      - "${RABBITMQ_MANAGER_PORT}:15672"
+    networks:
+      - openweb-network
+  #Redis Service
+  redis:
+    image: redis
+    container_name: "${PREFIX}redis"
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - ./db/redis:/var/lib/redis
+      - ./scripts:/bin/app
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - openweb-network
+  #Memcached
+  memcached:
+    image: memcached
+    container_name: "${PREFIX}memcached"
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "${MEMCACHED_PORT}:11211"
+    networks:
+      - openweb-network
+#Docker Networks
+networks:
+  openweb-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local

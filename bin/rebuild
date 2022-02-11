@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cd ../
+
+PREFIX=$(grep PREFIX .env | cut -d '=' -f2)
+PHP_VERSION=$(grep PHP_VERSION .env | cut -d '=' -f2)
+NODE_VERSION=$(grep NODE_VERSION .env | cut -d '=' -f2)
+
+docker stop $PREFIX"webserver"
+docker rm $PREFIX"webserver"
+
+docker stop $PREFIX"php"
+docker rm $PREFIX"php"
+docker rmi openweb/php:$PHP_VERSION
+
+docker stop $PREFIX"node"
+docker rm $PREFIX"node":$NODE_VERSION
+
+docker stop $PREFIX"mysql"
+docker rm $PREFIX"mysql"
+
+docker stop $PREFIX"pgsql"
+docker rm $PREFIX"pgsql"
+
+docker stop $PREFIX"redis"
+docker rm $PREFIX"redis"
+
+docker stop $PREFIX"rabbitmq"
+docker rm $PREFIX"rabbitmq"
+
+docker stop $PREFIX"memcached"
+docker rm $PREFIX"memcached"
